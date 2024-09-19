@@ -43,7 +43,7 @@ else
         sudo tar -zxf d4r.tar.gz -C ${D4R_DIR}
         cd ${D4R_DIR} || exit
         echo "编译 d4r..."
-        GOOS=linux GOARCH=amd64 go build -o d4r
+        GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
         if [ $? -ne 0 ]; then
             echo "编译 d4r 失败！"
             exit 1
