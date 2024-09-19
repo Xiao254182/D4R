@@ -1,6 +1,7 @@
 package enter
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -9,8 +10,9 @@ import (
 )
 
 // 交互式终端
-func EnterContainer(app *tview.Application, containerID string, onClose func()) {
+func EnterContainer(app *tview.Application, containerID string, containerName string, onClose func()) {
 	logView := tview.NewTextView().
+	        SetText(fmt.Sprintf("您当前进入的容器名为:%s,容器id为:%s", containerName, containerID)).
 		SetTextColor(tcell.ColorWhite).
 		SetScrollable(true)
 
