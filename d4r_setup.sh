@@ -17,9 +17,12 @@ else
         echo "解压 Go 语言..."
         sudo tar -zxf ${GO_TAR} -C /usr/local
         echo "配置 Go 环境变量..."
-        export PATH=\$PATH:${GO_INSTALL_DIR}/bin
-        export GOPROXY=https://goproxy.io,direct
-        export GOPATH=${D4R_DIR}
+        {
+            echo "export PATH=\$PATH:${GO_INSTALL_DIR}/bin"
+            echo "export GOPROXY=https://goproxy.io,direct"
+            echo "export GOPATH=${D4R_DIR}"
+        } | sudo tee /etc/profile.d/go.sh > /dev/null
+        source /etc/profile.d/go.sh
     else
         echo "下载 Go 语言失败!"
         exit 1
@@ -30,7 +33,7 @@ fi
 if [ -d "${D4R_DIR}" ]; then
     echo "d4r 已下载"
 else
-# 部署 d4r
+    # 部署 d4r
     echo "创建目录 ${D4R_DIR}..."
     sudo mkdir -p ${D4R_DIR}
 
@@ -40,7 +43,11 @@ else
         sudo tar -zxf d4r.tar.gz -C ${D4R_DIR}
         cd ${D4R_DIR} || exit
         echo "编译 d4r..."
-        GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
+        GOOS=linux GOARCH=amd64 go build -o d4r
+        if [ $? -ne 0 ]; then
+            echo "编译 d4r 失败！"
+            exit 1
+        fi
         echo "创建快捷命令..."
         {
             echo "cd ${D4R_DIR} && ./d4r"
