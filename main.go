@@ -7,6 +7,8 @@ import (
 	"d4r/update"
 	"github.com/rivo/tview"
 	"log"
+	"os"
+	"fmt"
 )
 
 // 主函数
