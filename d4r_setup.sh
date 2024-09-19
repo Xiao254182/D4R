@@ -3,7 +3,7 @@
 # 设置变量
 GO_VERSION="1.23.1"
 GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
-D4R_URL="https://github.com/Xiao254182/D4R/raw/refs/heads/master/d4r.tar.gz"
+D4R_URL="https://github.com/Xiao254182/D4R/archive/refs/heads/master.zip"
 D4R_DIR="/opt/d4r"
 GO_INSTALL_DIR="/usr/local/go"
 
@@ -38,10 +38,11 @@ else
     sudo mkdir -p ${D4R_DIR}
 
     echo "正在下载 d4r..."
-    if wget -q ${D4R_URL} -O d4r.tar.gz; then
+    if wget ${D4R_URL} -o ${D4R_DIR}/D4R-master.zip; then
         echo "解压 d4r..."
-        sudo tar -zxf d4r.tar.gz -C ${D4R_DIR}
+        yum install -y unzip > /dev/null 2>&1 || apt install -y unzip > /dev/null 2>&1
         cd ${D4R_DIR} || exit
+        sudo unzip -d ${D4R_DIR} D4R-master.zip && mv D4R-master/* . && rm -rf D4R-master
         echo "编译 d4r..."
         GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
         if [ $? -ne 0 ]; then
