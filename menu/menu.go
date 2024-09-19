@@ -73,7 +73,8 @@ func handleEnterEvent(app *tview.Application, table *tview.Table, containers [][
 	row, _ := table.GetSelection() // 获取当前选中的行
 	if row > 0 {                   // 确保不是表头
 		containerID := containers[row-1][0] // 获取选中的容器 ID
-		enter.EnterContainer(app, containerID, func() {
+		containerName := containers[row-1][6] //获取选中的容器名字
+		enter.EnterContainer(app, containerID, containerName,func() {
 			UpdateTable(app, containers, table, logos, tip) // 更新表格
 		})
 	}
