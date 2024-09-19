@@ -15,7 +15,9 @@ func main() {
 
 	containers, err := ps.GetDockerContainers()
 	if err != nil {
-		log.Fatal(err)
+		//log.Fatal(err)
+		fmt.Println("该系统不存在docker环境或docker服务未启动，请检查docker状态")
+		os.Exit(1) // 退出程序，状态码为1表示有错误发生
 	}
 
 	logos := static.CreateTextView("./static/logo/logo.txt")
