@@ -38,11 +38,11 @@ else
     sudo mkdir -p ${D4R_DIR}
 
     echo "正在下载 d4r..."
-    if wget ${D4R_URL} -o ${D4R_DIR}/D4R-master.zip; then
+    if wget -P ${D4R_DIR} ${D4R_URL}; then
         echo "解压 d4r..."
         yum install -y unzip > /dev/null 2>&1 || apt install -y unzip > /dev/null 2>&1
         cd ${D4R_DIR} || exit
-        sudo unzip -d ${D4R_DIR} D4R-master.zip && mv D4R-master/* . && rm -rf D4R-master
+        sudo unzip D4R-master.zip && mv D4R-master/* . && rm -rf D4R-master
         echo "编译 d4r..."
         GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
         if [ $? -ne 0 ]; then
