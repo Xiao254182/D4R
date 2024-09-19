@@ -1,11 +1,47 @@
 #!/bin/bash
 
-#部署go语言环境
-wget https://golang.google.cn/dl/go1.23.1.linux-amd64.tar.gz && tar -zxf go1.23.1.linux-amd64.tar.gz -C /usr/local
-echo "export PATH=$PATH:/usr/local/go/bin" >> /etc/profile && echo "export GOPROXY=https://goproxy.io,direct" >> /etc/profile && echo "export GOPATH=/opt/d4r" >> /etc/profile && source /etc/profile
-#部署d4r
-mkdir -p /opt/d4r
-wget https://github.com/Xiao254182/D4R/raw/refs/heads/master/d4r.tar.gz && tar -zxf d4r.tar.gz -C /opt/d4r && cd /opt/d4r
-GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
-echo "cd /opt/d4r && ./d4r" >> /usr/local/bin/d4r && chmod +x /usr/local/bin/d4r
-echo "使用d4r进入系统"
+# 设置变量
+GO_VERSION="1.23.1"
+GO_TAR="go${GO_VERSION}.linux-amd64.tar.gz"
+D4R_URL="https://github.com/Xiao254182/D4R/raw/refs/heads/master/d4r.tar.gz"
+D4R_DIR="/opt/d4r"
+GO_INSTALL_DIR="/usr/local/go"
+
+# 部署 Go 语言环境
+echo "正在下载 Go 语言..."
+if wget -q https://golang.google.cn/dl/${GO_TAR}; then
+    echo "解压 Go 语言..."
+    sudo tar -zxf ${GO_TAR} -C /usr/local
+    echo "配置 Go 环境变量..."
+    {
+        echo "export PATH=\$PATH:${GO_INSTALL_DIR}/bin"
+        echo "export GOPROXY=https://goproxy.io,direct"
+        echo "export GOPATH=${D4R_DIR}"
+    } | sudo tee -a /etc/profile > /dev/null
+    source /etc/profile
+else
+    echo "下载 Go 语言失败!"
+    exit 1
+fi
+
+# 部署 d4r
+echo "创建目录 ${D4R_DIR}..."
+sudo mkdir -p ${D4R_DIR}
+
+echo "正在下载 d4r..."
+if wget -q ${D4R_URL} -O d4r.tar.gz; then
+    echo "解压 d4r..."
+    sudo tar -zxf d4r.tar.gz -C ${D4R_DIR}
+    cd ${D4R_DIR} || exit
+    echo "编译 d4r..."
+    GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
+    echo "创建快捷命令..."
+    {
+        echo "cd ${D4R_DIR} && ./d4r"
+    } | sudo tee /usr/local/bin/d4r > /dev/null
+    sudo chmod +x /usr/local/bin/d4r
+    echo "使用 d4r 进入系统"
+else
+    echo "下载 d4r 失败!"
+    exit 1
+fi
