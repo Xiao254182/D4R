@@ -2,3 +2,4 @@
 <↑> 上        <l> logs
 <↓> 下        <i> exec
 <ESC> 退出    <d> rm -f
+<Ctrl+c> 退出系统
