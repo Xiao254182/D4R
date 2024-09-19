@@ -42,7 +42,7 @@ else
         echo "解压 d4r..."
         yum install -y unzip > /dev/null 2>&1 || apt install -y unzip > /dev/null 2>&1
         cd ${D4R_DIR} || exit
-        sudo unzip D4R-master.zip && mv D4R-master/* . && rm -rf D4R-master
+        sudo unzip master.zip > /dev/null 2>&1 && mv D4R-master/* . && rm -rf D4R-master
         echo "编译 d4r..."
         GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
         if [ $? -ne 0 ]; then
