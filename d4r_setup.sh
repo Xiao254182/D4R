@@ -17,12 +17,9 @@ else
         echo "解压 Go 语言..."
         sudo tar -zxf ${GO_TAR} -C /usr/local
         echo "配置 Go 环境变量..."
-        {
-            echo "export PATH=\$PATH:${GO_INSTALL_DIR}/bin"
-            echo "export GOPROXY=https://goproxy.io,direct"
-            echo "export GOPATH=${D4R_DIR}"
-        } | sudo tee -a /etc/profile > /dev/null
-        source /etc/profile
+        export PATH=\$PATH:${GO_INSTALL_DIR}/bin
+        export GOPROXY=https://goproxy.io,direct
+        export GOPATH=${D4R_DIR}
     else
         echo "下载 Go 语言失败!"
         exit 1
