@@ -23,6 +23,7 @@ else
             echo "export GOPATH=${D4R_DIR}"
         } | sudo tee /etc/profile.d/go.sh > /dev/null
         source /etc/profile.d/go.sh
+        rm -rf ${GO_TAR}
     else
         echo "下载 Go 语言失败!"
         exit 1
