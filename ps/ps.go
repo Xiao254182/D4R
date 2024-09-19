@@ -43,7 +43,7 @@ func getDockerOutput(command string, args ...string) ([][]string, error) {
 				}
 				// 检查第六个值并相应调整第五和第六个值
 				if fields[6] == "" {
-					// 第六个值为空，保持第五个值为空
+					// 第六个值为空，将第六个值赋给第五个值，保持第五个值为空
 					fields[6] = fields[5]
 					fields[5] = ""
 				}else {
