@@ -34,6 +34,23 @@ func getDockerOutput(command string, args ...string) ([][]string, error) {
 	for _, line := range lines[1:] { // 跳过表头
 		if line = strings.TrimSpace(line); line != "" {
 			fields := re.Split(line, -1)
+
+			// 确保 fields 至少有 6 个元素 
+			if len(fields) < 7 {
+				// 如果字段数不足 6，补充空值
+				for len(fields) < 7 {
+					fields = append(fields, "")
+				}
+				// 检查第六个值并相应调整第五和第六个值
+				if fields[6] == "" {
+					// 第六个值为空，保持第五个值为空
+					fields[6] = fields[5]
+					fields[5] = ""
+				}else {
+					log.Fatalln(err)
+				}
+			}
+
 			containers = append(containers, fields)
 		}
 	}
