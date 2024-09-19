@@ -39,7 +39,7 @@ else
     sudo mkdir -p ${D4R_DIR}
 
     echo "正在下载 d4r..."
-    if wget -P ${D4R_DIR} ${D4R_URL} > /dev/null 2>&1 ; then
+    if wget -q -P ${D4R_DIR} ${D4R_URL}; then
         echo "解压 d4r..."
         yum install -y unzip > /dev/null 2>&1 || apt install -y unzip > /dev/null 2>&1
         cd ${D4R_DIR} || exit
