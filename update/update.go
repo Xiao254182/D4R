@@ -9,7 +9,7 @@ import (
 )
 
 // 更新容器信息
-func UpdateContainers(app *tview.Application, table *tview.Table, logos, tip *tview.TextView) {
+func UpdateContainers(app *tview.Application, logos, tip *tview.TextView) {
 	var previousContainerIDs []string
 
 	for {
@@ -30,9 +30,39 @@ func UpdateContainers(app *tview.Application, table *tview.Table, logos, tip *tv
 				continue
 			}
 
+			//更新UI
+			app.QueueUpdateDraw(func() {
+				menu.UpdateTable(app, newContainers, logos, tip)
+			})
+		}
+	}
+}
+
+// 更新集群信息
+func UpdateDockerComposempose(app *tview.Application, logos, tip *tview.TextView) {
+	var previousDockerComposeNames []string
+
+	for {
+		time.Sleep(1 * time.Second) // 每秒更新一次
+
+		currentDockerComposeNames, err := ps.GetRunningDockerComposeName() // 获取当前运行的集群
+		if err != nil {
+			log.Println("获取集群失败:", err)
+			continue
+		}
+
+		// 比较当前和之前的容器 ID
+		if !equalStrings(previousDockerComposeNames, currentDockerComposeNames) {
+			previousDockerComposeNames = currentDockerComposeNames
+			newDockerCompose, err := ps.GetDockerCompose()
+			if err != nil {
+				log.Println("获取集群失败:", err)
+				continue
+			}
+
 			// 更新UI
 			app.QueueUpdateDraw(func() {
-				menu.UpdateTable(app, newContainers, table, logos, tip)
+				menu.UpdatePsTable(app, newDockerCompose, logos, tip)
 			})
 		}
 	}
