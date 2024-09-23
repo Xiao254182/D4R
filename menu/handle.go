@@ -46,6 +46,9 @@ func handleDockerComposeTableInputs(event *tcell.EventKey, app *tview.Applicatio
 		switch event.Rune() {
 		case 'p':
 			dockerComposePS, _ := ps.GetDockerCompose()
+			if dockerComposePS == nil {
+				return nil
+			}
 			DockerComposeTable := handleShowDockerComposePs(app, table, dockerComposePS, logos, tip)
 			app.SetRoot(DockerComposeTable, true)
 		case '\n', '\r':
