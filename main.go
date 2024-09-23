@@ -5,10 +5,10 @@ import (
 	"d4r/ps"
 	"d4r/static"
 	"d4r/update"
+	"fmt"
 	"github.com/rivo/tview"
 	"log"
 	"os"
-	"fmt"
 )
 
 // 主函数
@@ -25,19 +25,14 @@ func main() {
 	logos := static.CreateTextView("./static/logo/logo.txt")
 	tip := static.CreateTextView("./static/tip/tip.txt")
 
-	table := menu.CreateTable(app, containers, logos, tip)
+	table := menu.CreateDockerTable(app, containers, logos, tip)
 	//检测表格的更新
-	go update.UpdateContainers(app, table, logos, tip)
-
-	horizontalFlex := tview.NewFlex().
-		SetDirection(tview.FlexColumn).
-		AddItem(tip, 0, 1, false).
-		AddItem(logos, 0, 2, false)
+	go update.UpdateContainers(app, logos, tip)
+	go update.UpdateDockerComposempose(app, logos, tip)
 
 	mainFlex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(horizontalFlex, 0, 2, false).
-		AddItem(table, 0, 10, true)
+		AddItem(table, 0, 10, true) // 将表格添加到剩余空间
 
 	if err := app.SetRoot(mainFlex, true).Run(); err != nil {
 		log.Fatal(err)
