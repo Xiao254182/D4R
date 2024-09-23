@@ -47,7 +47,7 @@ func UpdateDockerComposempose(app *tview.Application, logos, tip *tview.TextView
 
 		currentDockerComposeNames, err := ps.GetRunningDockerComposeName() // 获取当前运行的集群
 		if err != nil {
-			log.Println("获取集群失败:", err)
+			// log.Println("获取集群失败:", err)
 			continue
 		}
 
@@ -56,7 +56,7 @@ func UpdateDockerComposempose(app *tview.Application, logos, tip *tview.TextView
 			previousDockerComposeNames = currentDockerComposeNames
 			newDockerCompose, err := ps.GetDockerCompose()
 			if err != nil {
-				log.Println("获取集群失败:", err)
+				// log.Println("获取集群失败:", err)
 				continue
 			}
 
