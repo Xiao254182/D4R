@@ -142,7 +142,7 @@ func handleShowDockerComposePs(app *tview.Application, table *tview.Table, docke
 	return nil
 }
 
-// 处理更新表格信息事件
+// 处理更新表格信息事件，进入menu后展示
 func UpdatePsTable(app *tview.Application, containers [][]string, logos *tview.TextView, tip *tview.TextView) {
 
 	mainFlex := tview.NewFlex().
