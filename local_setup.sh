@@ -33,13 +33,13 @@ fi
 
 # 检查 d4r 是否已下载
 mkdir -p ${D4R_DIR}
-find / -type d -name "D4R-*" -exec cp -r {}/* ${D4R_DIR} \; > /dev/null 2>&1
+sudo find /* -type d -name "D4R-*" -exec sh -c 'cp -rf "$1/"* /opt/d4r/' _ {} \;
 if [ $? -ne 0 ]; then
     echo "未找到D4R安装包！"
     exit 1
 fi
 echo "d4r 已下载"
-find / -type d -name "D4R-*" -exec rm -rf {} \;
+find /* -type d -name "D4R-*" -exec rm -rf {} \;
 
 cd ${D4R_DIR} && echo "编译 d4r..."
 GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
