@@ -19,3 +19,7 @@ docker-compose部分
 ```shell
 bash <(wget -qO - https://raw.githubusercontent.com/Xiao254182/D4R/refs/heads/master/d4r_setup.sh)
 ```
+(PS:如果网络不好，可以先将源代码下载到服务器中，然后执行 `local_setup.sh` 脚本即可)
+```shell
+https://github.com/Xiao254182/D4R/releases
+```
