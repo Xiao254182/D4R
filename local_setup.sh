@@ -32,30 +32,24 @@ else
 fi
 
 # 检查 d4r 是否已下载
-mkdir -p ${D4R_DIR} && find /* -name "D4R-*" -exec cp {} ${D4R_DIR} \;
-
-cd ${D4R_DIR}
-if [ -d "${D4R_DIR}" ]; then
-    echo "d4r 已下载"
-    if ! command -v unzip > /dev/null; then
-        echo "unzip 未安装，请安装 wget 后重试."
-        exit 1
-    fi
-    unzip ./D4R-* > /dev/null 2>&1 || tar -zxvf ./D4R-* > /dev/null 2>&1
-    sudo  mv D4R-*/* . && find /* -name "D4R-*" -exec rm -rf {} \;
-    echo "编译 d4r..."
-    GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo "编译 d4r 失败！"
-        exit 1
-    fi
-    echo "创建快捷命令..."
-    {
-        echo "cd ${D4R_DIR} && ./d4r"
-    } | sudo tee /usr/local/bin/d4r > /dev/null
-    sudo chmod +x /usr/local/bin/d4r
-    echo "使用 d4r 进入系统"
-else
-    echo "下载 d4r 失败!"
+mkdir -p ${D4R_DIR}
+find / -type d -name "D4R-*" -exec cp -r {}/* ${D4R_DIR} \; > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "未找到D4R安装包！"
     exit 1
 fi
+echo "d4r 已下载"
+find / -type d -name "D4R-*" -exec rm -rf {} \;
+
+cd ${D4R_DIR} && echo "编译 d4r..."
+GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
+if [ $? -ne 0 ]; then
+    echo "编译 d4r 失败！"
+    exit 1
+fi
+echo "创建快捷命令..."
+{
+    echo "cd ${D4R_DIR} && ./d4r"
+} | sudo tee /usr/local/bin/d4r > /dev/null
+sudo chmod +x /usr/local/bin/d4r
+echo "使用 d4r 进入系统"
