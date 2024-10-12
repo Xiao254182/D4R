@@ -39,7 +39,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 echo "d4r 已下载"
-find /* -type d -name "D4R-*" -exec rm -rf {} \;
+find /* -type d -name "D4R-*" -exec rm -rf {} \; > /dev/null 2>&1
 
 cd ${D4R_DIR} && echo "编译 d4r..."
 GOOS=linux GOARCH=amd64 go build -o d4r > /dev/null 2>&1
