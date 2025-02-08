@@ -1,40 +1,268 @@
 package main
 
 import (
-	"d4r/menu"
-	"d4r/ps"
-	"d4r/static"
-	"d4r/update"
+	"context"
 	"fmt"
-	"github.com/rivo/tview"
-	"log"
 	"os"
+	"os/exec"
+	"strings"
+	"time"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
-// 主函数
+
 func main() {
 	app := tview.NewApplication()
 
-	containers, err := ps.GetDockerContainers()
-	if err != nil {
-		//log.Fatal(err)
-		fmt.Println("该系统不存在docker环境或docker服务未启动，请检查docker状态")
-		os.Exit(1) // 退出程序，状态码为1表示有错误发生
-	}
+	imagelist := createImageList()
+	logPanel := createTextViewPanel(app, "Log")
+	statsPanel := createTextViewPanel(app, "Stats")
+	containerList := createApplication(imagelist, logPanel, statsPanel, app)
+	outputPanel := createOutputPanel(logPanel)
 
-	logos := static.CreateTextView("./static/logo/logo.txt")
-	tip := static.CreateTextView("./static/tip/tip.txt")
+	MainPage := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(tview.NewBox().SetBorder(true).SetTitle("D4R"), 7, 0, false).
+		AddItem(tview.NewFlex().
+			AddItem(containerList, 20, 1, true).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(outputPanel, 0, 3, false).
+				AddItem(statsPanel, 6, 1, false), 0, 2, false).
+			AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false), 0, 1, true)
 
-	table := menu.CreateDockerTable(app, containers, logos, tip)
-	//检测表格的更新
-	go update.UpdateContainers(app, logos, tip)
-	go update.UpdateDockerComposempose(app, logos, tip)
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyCtrlC:
+			app.Stop()
+			return nil
+		case tcell.KeyCtrlL:
+			app.SetFocus(logPanel)
+			return nil
+		case tcell.KeyEscape:
+			app.SetFocus(containerList)
+			return nil
+		case tcell.KeyCtrlI:
+			index := containerList.GetCurrentItem()
+			mainText, _ := containerList.GetItemText(index)
 
-	mainFlex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(table, 0, 10, true) // 将表格添加到剩余空间
+			if mainText != "" {
+				parts := strings.SplitN(mainText, ".", 2)
+				if len(parts) == 2 {
+					mainText = parts[1]
+				}
+				fmt.Println("Executing docker exec for container:", mainText)
 
-	if err := app.SetRoot(mainFlex, true).Run(); err != nil {
-		log.Fatal(err)
+				EnterContainer(app, strings.TrimSpace(mainText), mainText, MainPage, containerList, func() {
+					app.SetRoot(MainPage, true).SetFocus(containerList)
+				})
+			}
+			return nil
+		case tcell.KeyCtrlD:
+			index := containerList.GetCurrentItem()
+			mainText, _ := containerList.GetItemText(index)
+
+			modal := tview.NewModal().
+				SetText("是否删除该容器？").
+				AddButtons([]string{"No", "Yes"}).
+				SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+					if buttonLabel == "Yes" {
+						if mainText != "" {
+							parts := strings.SplitN(mainText, ".", 2)
+							if len(parts) == 2 {
+								mainText = parts[1]
+							}
+							DeleteContainer(app, strings.TrimSpace(mainText), mainText, MainPage, containerList, func() {
+								app.SetRoot(MainPage, true).SetFocus(containerList)
+							})
+						} else {
+							fmt.Println("No container selected")
+						}
+					} else {
+						app.SetRoot(MainPage, true).SetFocus(containerList)
+					}
+				})
+			app.SetRoot(modal, true) // 显示模态
+		}
+		return event
+	})
+	// 运行 TUI
+	if err := app.SetRoot(MainPage, true).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
+		os.Exit(1)
 	}
 }
+
+func createContainerList() (commandList *tview.List) {
+	commandList = tview.NewList()
+	commandList.SetBorder(true).SetTitle("Containers")
+	commandList.ShowSecondaryText(true)
+	return commandList
+}
+
+func createImageList() (commandList *tview.List) {
+	commandList = tview.NewList()
+	commandList.SetBorder(true).SetTitle("Images")
+	commandList.ShowSecondaryText(false)
+	commandList.SetSelectedFocusOnly(true)
+	return commandList
+}
+
+func createApplication(imageList *tview.List, logPanel *tview.TextView, statsPanel *tview.TextView, app *tview.Application) *tview.List {
+	containerList := createContainerList()
+
+	dockernameout, err := exec.Command("docker", "ps", "-a", "--format", "{{.Names}}").Output()
+	if err == nil {
+		containernames := strings.Split(strings.TrimSpace(string(dockernameout)), "\n")
+		for i, containerName := range containernames {
+			name := containerName
+			containerList.AddItem(
+				fmt.Sprintf("%d.%s", i+1, name),
+				"",
+				rune(0),
+				nil,
+			)
+		}
+
+		var cancelStats context.CancelFunc
+
+		containerList.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+			imageList.Clear()
+			logPanel.Clear()
+			statsPanel.Clear()
+
+			name := containernames[index]
+
+			cmd := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", name)
+			out, err := cmd.Output()
+			if err == nil {
+				imageName := strings.TrimSpace(string(out))
+				imageList.AddItem(imageName, "", 0, nil)
+			}
+
+			go func() {
+				logCmd := exec.Command("docker", "logs", "-f", "-n", "1000", name)
+				logOut, err := logCmd.StdoutPipe()
+				if err != nil {
+					return
+				}
+				if err := logCmd.Start(); err != nil {
+					return
+				}
+				buf := make([]byte, 1024)
+				for {
+					n, err := logOut.Read(buf)
+					if n > 0 {
+						app.QueueUpdateDraw(func() {
+							logPanel.Write(buf[:n])
+							logPanel.ScrollToEnd()
+						})
+					}
+					if err != nil {
+						break
+					}
+				}
+			}()
+
+			if cancelStats != nil {
+				cancelStats()
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			cancelStats = cancel
+
+			go func() {
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						statsCmd := exec.Command("docker", "stats", "--no-stream", name)
+						statsOut, err := statsCmd.Output()
+						if err == nil {
+							app.QueueUpdateDraw(func() {
+								statsPanel.SetText(string(statsOut))
+							})
+						}
+						time.Sleep(1 * time.Second)
+					}
+				}
+			}()
+		})
+	}
+
+	return containerList
+}
+
+func createTextViewPanel(app *tview.Application, name string) (panel *tview.TextView) {
+	panel = tview.NewTextView()
+	panel.SetBorder(true).SetTitle(name)
+	panel.SetChangedFunc(func() {
+		app.Draw()
+	})
+	panel.SetDynamicColors(true)
+	panel.SetScrollable(true)
+	return panel
+}
+
+func createOutputPanel(logPanel *tview.TextView) (outputPanel *tview.Flex) {
+	outputPanel = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(logPanel, 0, 1, false)
+	return outputPanel
+}
+
+func EnterContainer(app *tview.Application, containerID string, containerName string, flex *tview.Flex, containerList *tview.List, callback func()) {
+	shellView := tview.NewTextView()
+
+	go func() {
+		if err := runDockerExec(app, containerID, shellView); err != nil {
+			app.QueueUpdateDraw(func() {
+				shellView.SetText(fmt.Sprintf("Error: %s", err.Error()))
+			})
+		}
+		callback()
+	}()
+}
+
+func runDockerExec(app *tview.Application, containerID string, logView *tview.TextView) error {
+	// 先执行 clear 命令
+	clearCmd := exec.Command("clear")
+	clearCmd.Stdout = os.Stdout
+	clearCmd.Run()
+
+	// 然后执行 docker exec 命令
+	cmd := exec.Command("docker", "exec", "-it", containerID, "bash", "-c", "clear; exec /bin/bash")
+	if err := executeCommand(app, cmd, logView); err != nil {
+		cmd = exec.Command("docker", "exec", "-it", containerID, "bash", "-c", "clear; exec /bin/bash")
+		return executeCommand(app, cmd, logView)
+	}
+	return nil
+}
+
+func executeCommand(app *tview.Application, cmd *exec.Cmd, shellView *tview.TextView) error {
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	app.QueueUpdateDraw(func() {
+		modal := tview.NewFlex().
+			AddItem(shellView, 0, 1, true).
+			AddItem(tview.NewBox().
+				SetBorder(false), 10, 1, false)
+		modal.Clear()
+		app.SetRoot(modal, true).SetFocus(shellView)
+	})
+
+	err := cmd.Run()
+	return err
+}
+
+func DeleteContainer(app *tview.Application, containerID string, containerName string, flex *tview.Flex, containerList *tview.List, callback func()) {
+	cmd := exec.Command("docker", "rm", "-f", containerID)
+	if err := cmd.Run(); err != nil {
+		fmt.Println("Error deleting container:", err)
+	} else {
+		app.SetRoot(flex, true).SetFocus(containerList)
+	}
+}
+
