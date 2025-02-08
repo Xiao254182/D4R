@@ -1,0 +1,4 @@
+如何操作？:
+<↑> 上       <l> logs        <Ctrl+c> 退出系统
+<↓> 下       <i> exec        <Ctrl+d> 进入docker-compose集群页面
+<ESC> 退出        <d> rm -f       <p> 在集群页面查看选中集群中包含的容器
