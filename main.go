@@ -12,6 +12,47 @@ import (
 	"github.com/rivo/tview"
 )
 
+func HeaderTitle(widget tview.Primitive, width, height int) tview.Primitive {
+	hostCmd := exec.Command("sh", "-c", "ip route get 114.114.114.114 | awk '{print $7}'")
+	hostOut, _ := hostCmd.Output()
+	host := strings.TrimSpace(string(hostOut))
+
+	osCmd := exec.Command("sh", "-c", "hostnamectl | grep 'Operating System' | cut -d ':' -f2 | xargs")
+	osOut, _ := osCmd.Output()
+	operatingSystem := strings.TrimSpace(string(osOut))
+
+	archCmd := exec.Command("sh", "-c", "hostnamectl | grep 'Architecture' | cut -d ':' -f2 | xargs")
+	archOut, _ := archCmd.Output()
+	arch := strings.TrimSpace(string(archOut))
+
+	docker_RevCmd := exec.Command("sh", "-c", "docker -v | awk '{print $3}' | sed 's/,//'")
+	docker_RevOut, _ := docker_RevCmd.Output()
+	docker_ver := strings.TrimSpace(string(docker_RevOut))
+
+	cpuCmd := exec.Command("sh", "-c", "top -bn1 | grep 'Cpu(s)' | sed 's/.*, *\\([0-9.]*\\)%* id.*/\\1/' | awk '{print 100 - $1 \"%\"}'")
+	cpuOut, _ := cpuCmd.Output()
+	cpu := strings.TrimSpace(string(cpuOut))
+
+	memCmd := exec.Command("sh", "-c", "free | awk '/Mem:/ {printf \"%.2f%%\\n\", ($3-$6)/$2 * 100}'")
+	memOut, _ := memCmd.Output()
+	mem := strings.TrimSpace(string(memOut))
+
+	titleText := fmt.Sprintf("tag: 占位\nHost: %s\nOS: %s\narch: %s\nD4R_vev: v2.0\ndocker_ver: %s\nCPU: %s\nMem: %s", host, operatingSystem, arch, docker_ver, cpu, mem)
+	lineCount := strings.Count(titleText, "\n") + 3
+	if height < lineCount {
+		height = lineCount // 动态调整高度
+	}
+
+	return tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(nil, 0, 1, false).
+		AddItem(
+			tview.NewFlex().
+				AddItem(tview.NewTextView().SetText(titleText), 0, 1, false).
+				AddItem(widget, width, 0, true),
+			height, 0, true).
+		AddItem(nil, 0, 1, false)
+}
 
 func main() {
 	app := tview.NewApplication()
@@ -21,9 +62,10 @@ func main() {
 	statsPanel := createTextViewPanel(app, "Stats")
 	containerList := createApplication(imagelist, logPanel, statsPanel, app)
 	outputPanel := createOutputPanel(logPanel)
+	headerTitle := HeaderTitle(tview.NewTextView(), 0, 1)
 
 	MainPage := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(tview.NewBox().SetBorder(true).SetTitle("D4R"), 7, 0, false).
+		AddItem(headerTitle, 7, 0, false).
 		AddItem(tview.NewFlex().
 			AddItem(containerList, 20, 1, true).
 			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
@@ -265,4 +307,3 @@ func DeleteContainer(app *tview.Application, containerID string, containerName s
 		app.SetRoot(flex, true).SetFocus(containerList)
 	}
 }
-
