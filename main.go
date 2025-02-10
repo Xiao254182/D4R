@@ -12,6 +12,31 @@ import (
 	"github.com/rivo/tview"
 )
 
+func Tips() tview.Primitive {
+	return tview.NewTextView().
+		SetText(`
+Tips:
+	  ↑ ↓       切换容器
+	  Ctrl + C  退出
+	  Ctrl + L  切换到日志面板
+	  Ctrl + I  进入容器
+	  Ctrl + D  删除容器
+	`)
+}
+
+func logo() tview.Primitive {
+	return tview.NewTextView().
+		SetText(` logo:
+		_____  _  _   _____  
+ 		|  __ \| || | |  __ \ 
+	 	| |  | | || |_| |__) |
+ 		| |  | |__   _|  _  / 
+ 		| |__| |  | | | | \ \ 
+		|_____/   |_| |_|  \_\`).
+		SetTextColor(tcell.ColorGreen).
+		SetTextAlign(tview.AlignRight)
+}
+
 func HeaderTitle(widget tview.Primitive, width, height int) tview.Primitive {
 	hostCmd := exec.Command("sh", "-c", "ip route get 114.114.114.114 | awk '{print $7}'")
 	hostOut, _ := hostCmd.Output()
@@ -43,12 +68,17 @@ func HeaderTitle(widget tview.Primitive, width, height int) tview.Primitive {
 		height = lineCount // 动态调整高度
 	}
 
+	logo := logo()
+	tips := Tips()
+
 	return tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(nil, 0, 1, false).
 		AddItem(
 			tview.NewFlex().
 				AddItem(tview.NewTextView().SetText(titleText), 0, 1, false).
+				AddItem(tips, 0, 1, false).
+				AddItem(logo, 0, 1, false).
 				AddItem(widget, width, 0, true),
 			height, 0, true).
 		AddItem(nil, 0, 1, false)
