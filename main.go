@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	headerHeight   = 7
+	headerHeight   = 6
 	statsHeight    = 6
 	containerWidth = 20
 	rightPanel     = 20
@@ -26,6 +26,10 @@ type AppComponents struct {
 	LogPanel      *tview.TextView
 	StatsPanel    *tview.TextView
 	ImageList     *tview.List
+}
+
+type systemInfo struct {
+	host, os, arch, dockerVer, cpu, mem string
 }
 
 func main() {
@@ -60,8 +64,14 @@ func createMainLayout(containerList *tview.List, logPanel, statsPanel *tview.Tex
 	header := createHeader()
 	outputPanel := createOutputPanel(logPanel)
 
+	separator := tview.NewTextView().
+		SetText(strings.Repeat("- -", 10000)).
+		SetTextAlign(tview.AlignCenter).
+		SetTextColor(tcell.ColorBlueViolet)
+
 	return tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header, headerHeight, 0, false).
+		AddItem(separator, 1, 0, false).
 		AddItem(tview.NewFlex().
 			AddItem(containerList, containerWidth, 1, true).
 			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
@@ -113,10 +123,6 @@ func createHeader() tview.Primitive {
 		AddItem(createLogoPanel(), 0, 1, false)
 }
 
-type systemInfo struct {
-	host, os, arch, dockerVer, cpu, mem string
-}
-
 func getSystemInfo() systemInfo {
 	return systemInfo{
 		host:      executeCommand("ip route get 114.114.114.114 | awk '{print $7}'"),
@@ -139,7 +145,7 @@ func executeCommand(cmd string) string {
 func createSystemInfoPanel(content string) tview.Primitive {
 	return tview.NewTextView().
 		SetText(content).
-		SetDynamicColors(true).
+		SetTextColor(tcell.ColorCornflowerBlue).
 		SetWrap(false)
 }
 
@@ -157,13 +163,14 @@ Tips:
 
 func createLogoPanel() tview.Primitive {
 	return tview.NewTextView().
+		SetTextAlign(tview.AlignRight).
 		SetText(strings.TrimSpace(`
-  _____  _  _   _____  
-  |  __ \| || | |  __ \ 
-  | |  | | || |_| |__) |
-  | |  | |__   _|  _  / 
-  | |__| |  | | | | \ \ 
-  |_____/   |_| |_|  \_\
+	_____  _  _   _____  
+   |  __ \| || | |  __ \ 
+   | |  | | || |_| |__) |
+   | |  | |__   _|  _  / 
+   | |__| |  | | | | \ \ 
+   |_____/   |_| |_|  \_\
 `)).
 		SetTextColor(tcell.ColorGreen)
 }
