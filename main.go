@@ -45,10 +45,9 @@ func main() {
 }
 
 func setupUI(app *tview.Application) *AppComponents {
-	imageList := createImageList()
 	logPanel := createTextViewPanel("Log")
 	statsPanel := createTextViewPanel("Stats")
-	containerList := createContainerList(imageList, logPanel, statsPanel, app)
+	containerList := createContainerList(logPanel, statsPanel, app)
 
 	return &AppComponents{
 		App:           app,
@@ -56,7 +55,6 @@ func setupUI(app *tview.Application) *AppComponents {
 		ContainerList: containerList,
 		LogPanel:      logPanel,
 		StatsPanel:    statsPanel,
-		ImageList:     imageList,
 	}
 }
 
@@ -78,13 +76,6 @@ func createMainLayout(containerList *tview.List, logPanel, statsPanel *tview.Tex
 				AddItem(outputPanel, 0, 3, false).
 				AddItem(statsPanel, statsHeight, 1, false), 0, 2, false).
 			AddItem(tview.NewBox().SetBorder(true).SetTitle("Right Panel"), rightPanel, 1, false), 0, 1, true)
-}
-
-func createImageList() *tview.List {
-	list := tview.NewList()
-	list.SetBorder(true).SetTitle("Images")
-	list.ShowSecondaryText(false)
-	return list
 }
 
 func setupGlobalInputHandlers(components *AppComponents) {
@@ -175,9 +166,9 @@ func createLogoPanel() tview.Primitive {
 		SetTextColor(tcell.ColorGreen)
 }
 
-func createContainerList(imageList *tview.List, logPanel, statsPanel *tview.TextView, app *tview.Application) *tview.List {
+func createContainerList(logPanel, statsPanel *tview.TextView, app *tview.Application) *tview.List {
 	list := tview.NewList()
-	list.SetBorder(true).SetTitle("Containers")
+	list.SetBorder(true).SetTitle("Containers").SetBorderColor(tcell.ColorLightSkyBlue)
 
 	containers := getContainerList()
 	for i, name := range containers {
@@ -186,7 +177,7 @@ func createContainerList(imageList *tview.List, logPanel, statsPanel *tview.Text
 
 	var cancelStats context.CancelFunc
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		updateContainerDetails(index, containers, imageList, logPanel, statsPanel, app, &cancelStats)
+		updateContainerDetails(index, containers, logPanel, statsPanel, app, &cancelStats)
 	})
 
 	return list
@@ -200,8 +191,7 @@ func getContainerList() []string {
 	return strings.Split(strings.TrimSpace(string(out)), "\n")
 }
 
-func updateContainerDetails(index int, containers []string, imageList *tview.List, logPanel, statsPanel *tview.TextView, app *tview.Application, cancelStats *context.CancelFunc) {
-	imageList.Clear()
+func updateContainerDetails(index int, containers []string, logPanel, statsPanel *tview.TextView, app *tview.Application, cancelStats *context.CancelFunc) {
 	logPanel.Clear()
 	statsPanel.Clear()
 
@@ -211,8 +201,6 @@ func updateContainerDetails(index int, containers []string, imageList *tview.Lis
 	name := containers[index]
 
 	// Get container image
-	image := executeCommand(fmt.Sprintf("docker inspect --format '{{.Config.Image}}' %s", name))
-	imageList.AddItem(image, "", 0, nil)
 
 	// Start log stream
 	go streamLogs(name, logPanel, app)
@@ -228,6 +216,7 @@ func updateContainerDetails(index int, containers []string, imageList *tview.Lis
 
 func streamLogs(containerName string, logPanel *tview.TextView, app *tview.Application) {
 	cmd := exec.Command("docker", "logs", "-f", "-n", "1000", containerName)
+
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return
