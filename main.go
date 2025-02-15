@@ -54,6 +54,7 @@ func setupUI(app *tview.Application) *AppComponents {
 		MainPage:      createMainLayout(containerList, logPanel, statsPanel, containerInfoPanel),
 		ContainerList: containerList,
 		LogPanel:      logPanel,
+		ContainerInfo: containerInfoPanel,
 	}
 }
 
@@ -91,6 +92,9 @@ func setupGlobalInputHandlers(components *AppComponents) {
 			return nil
 		case event.Key() == tcell.KeyCtrlD:
 			handleContainerDeletion(components)
+			return nil
+		case event.Key() == tcell.KeyCtrlN:
+			components.App.SetFocus(components.ContainerInfo)
 			return nil
 		}
 		return event
@@ -198,13 +202,10 @@ func updateContainerDetails(index int, containers []string, logPanel, statsPanel
 
 	// 更新容器详情信息
 	infoPanel := getContainerInfo(name)
-	// 更新右侧容器信息面板
 	containerInfo.SetText(infoPanel.GetText(false))
 
-	// 开始日志流
 	go streamLogs(name, logPanel, app)
 
-	// 开始统计更新
 	if *cancelStats != nil {
 		(*cancelStats)()
 	}
@@ -259,29 +260,73 @@ func getContainerDetails(containerName string) string {
 		return fmt.Sprintf("无法获取容器信息: %v", err)
 	}
 
-	// 提取我们关心的部分，例如容器的状态、镜像等
-	// 这里使用简单的 JSON 解析来提取信息
-	// 可以根据需要提取更多字段
+	// 获取容器状态
 	statusCmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", containerName)
 	status, err := statusCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("容器状态获取失败: %v", err)
 	}
 
+	// 获取容器镜像
 	imageCmd := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", containerName)
 	image, err := imageCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("容器镜像获取失败: %v", err)
 	}
 
+	// 获取容器创建时间
 	createdCmd := exec.Command("docker", "inspect", "--format", "{{.Created}}", containerName)
 	created, err := createdCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("容器创建时间获取失败: %v", err)
 	}
 
+	// 获取容器的挂载目录 (-v)
+	volumesCmd := exec.Command("docker", "inspect", "--format", "{{range .Mounts}}{{.Source}}{{end}}", containerName)
+	volumes, err := volumesCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器挂载目录获取失败: %v", err)
+	}
+
+	// 获取容器的端口映射 (-p)
+	portsCmd := exec.Command("docker", "inspect", "--format", "{{range .NetworkSettings.Ports}}{{.}}{{end}}", containerName)
+	ports, err := portsCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器端口映射获取失败: %v", err)
+	}
+
+	// 获取容器的网络配置 (--network)
+	networkCmd := exec.Command("docker", "inspect", "--format", "{{.NetworkSettings.IPAddress}}", containerName)
+	network, err := networkCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器网络地址获取失败: %v", err)
+	}
+
+	// 获取容器的工作目录 (-w)
+	workingDirCmd := exec.Command("docker", "inspect", "--format", "{{.Config.WorkingDir}}", containerName)
+	workingDir, err := workingDirCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器工作目录获取失败: %v", err)
+	}
+
+	// 获取容器的用户 (-u)
+	userCmd := exec.Command("docker", "inspect", "--format", "{{.Config.User}}", containerName)
+	user, err := userCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器用户获取失败: %v", err)
+	}
+
+	// 获取容器的环境变量 (-e)
+	envCmd := exec.Command("docker", "inspect", "--format", "{{range .Config.Env}}{{.}}{{end}}", containerName)
+	env, err := envCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器环境变量获取失败: %v", err)
+	}
+
 	// 拼接要显示的信息
-	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s", string(status), string(image), string(created))
+	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s\n挂载目录: %s\n端口映射: %s\n网络地址: %s\n工作目录: %s\n用户: %s\n环境变量: %s",
+		string(status), string(image), string(created), string(volumes), string(ports), string(network), string(workingDir), string(user), string(env))
+
 	return info
 }
 
