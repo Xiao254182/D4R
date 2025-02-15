@@ -24,8 +24,7 @@ type AppComponents struct {
 	MainPage      *tview.Flex
 	ContainerList *tview.List
 	LogPanel      *tview.TextView
-	StatsPanel    *tview.TextView
-	ImageList     *tview.List
+	ContainerInfo *tview.TextView
 }
 
 type systemInfo struct {
@@ -47,25 +46,22 @@ func main() {
 func setupUI(app *tview.Application) *AppComponents {
 	logPanel := createTextViewPanel("Log")
 	statsPanel := createTextViewPanel("Stats")
-	containerList := createContainerList(logPanel, statsPanel, app)
+	containerInfoPanel := createTextViewPanel("ContainerInfo")
 
+	containerList := createContainerList(logPanel, statsPanel, containerInfoPanel, app)
 	return &AppComponents{
 		App:           app,
-		MainPage:      createMainLayout(containerList, logPanel, statsPanel),
+		MainPage:      createMainLayout(containerList, logPanel, statsPanel, containerInfoPanel),
 		ContainerList: containerList,
 		LogPanel:      logPanel,
-		StatsPanel:    statsPanel,
 	}
 }
 
-func createMainLayout(containerList *tview.List, logPanel, statsPanel *tview.TextView) *tview.Flex {
+func createMainLayout(containerList *tview.List, logPanel, statsPanel, containerInfo *tview.TextView) *tview.Flex {
 	header := createHeader()
 	outputPanel := createOutputPanel(logPanel)
 
-	separator := tview.NewTextView().
-		SetText(strings.Repeat("- -", 10000)).
-		SetTextAlign(tview.AlignCenter).
-		SetTextColor(tcell.ColorBlueViolet)
+	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorBlueViolet)
 
 	return tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header, headerHeight, 0, false).
@@ -75,7 +71,7 @@ func createMainLayout(containerList *tview.List, logPanel, statsPanel *tview.Tex
 			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
 				AddItem(outputPanel, 0, 3, false).
 				AddItem(statsPanel, statsHeight, 1, false), 0, 2, false).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("Right Panel"), rightPanel, 1, false), 0, 1, true)
+			AddItem(containerInfo, rightPanel, 1, false), 0, 1, true)
 }
 
 func setupGlobalInputHandlers(components *AppComponents) {
@@ -166,7 +162,7 @@ func createLogoPanel() tview.Primitive {
 		SetTextColor(tcell.ColorGreen)
 }
 
-func createContainerList(logPanel, statsPanel *tview.TextView, app *tview.Application) *tview.List {
+func createContainerList(logPanel, statsPanel, containerInfo *tview.TextView, app *tview.Application) *tview.List {
 	list := tview.NewList()
 	list.SetBorder(true).SetTitle("Containers").SetBorderColor(tcell.ColorLightSkyBlue)
 
@@ -177,7 +173,7 @@ func createContainerList(logPanel, statsPanel *tview.TextView, app *tview.Applic
 
 	var cancelStats context.CancelFunc
 	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-		updateContainerDetails(index, containers, logPanel, statsPanel, app, &cancelStats)
+		updateContainerDetails(index, containers, logPanel, statsPanel, app, &cancelStats, containerInfo)
 	})
 
 	return list
@@ -191,7 +187,7 @@ func getContainerList() []string {
 	return strings.Split(strings.TrimSpace(string(out)), "\n")
 }
 
-func updateContainerDetails(index int, containers []string, logPanel, statsPanel *tview.TextView, app *tview.Application, cancelStats *context.CancelFunc) {
+func updateContainerDetails(index int, containers []string, logPanel, statsPanel *tview.TextView, app *tview.Application, cancelStats *context.CancelFunc, containerInfo *tview.TextView) {
 	logPanel.Clear()
 	statsPanel.Clear()
 
@@ -200,12 +196,15 @@ func updateContainerDetails(index int, containers []string, logPanel, statsPanel
 	}
 	name := containers[index]
 
-	// Get container image
+	// 更新容器详情信息
+	infoPanel := getContainerInfo(name)
+	// 更新右侧容器信息面板
+	containerInfo.SetText(infoPanel.GetText(false))
 
-	// Start log stream
+	// 开始日志流
 	go streamLogs(name, logPanel, app)
 
-	// Start stats updates
+	// 开始统计更新
 	if *cancelStats != nil {
 		(*cancelStats)()
 	}
@@ -240,6 +239,50 @@ func streamLogs(containerName string, logPanel *tview.TextView, app *tview.Appli
 			break
 		}
 	}
+}
+
+func getContainerInfo(containerName string) *tview.TextView {
+	infoPanel := tview.NewTextView()
+	infoPanel.SetBorder(true).SetTitle("Container Info").SetBorderColor(tcell.ColorLightSkyBlue)
+
+	// 获取容器的详细信息
+	info := getContainerDetails(containerName)
+	infoPanel.SetText(info)
+
+	return infoPanel
+}
+
+func getContainerDetails(containerName string) string {
+	cmd := exec.Command("docker", "inspect", containerName)
+	_, err := cmd.Output()
+	if err != nil {
+		return fmt.Sprintf("无法获取容器信息: %v", err)
+	}
+
+	// 提取我们关心的部分，例如容器的状态、镜像等
+	// 这里使用简单的 JSON 解析来提取信息
+	// 可以根据需要提取更多字段
+	statusCmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", containerName)
+	status, err := statusCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器状态获取失败: %v", err)
+	}
+
+	imageCmd := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", containerName)
+	image, err := imageCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器镜像获取失败: %v", err)
+	}
+
+	createdCmd := exec.Command("docker", "inspect", "--format", "{{.Created}}", containerName)
+	created, err := createdCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器创建时间获取失败: %v", err)
+	}
+
+	// 拼接要显示的信息
+	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s", string(status), string(image), string(created))
+	return info
 }
 
 func updateStats(ctx context.Context, containerName string, statsPanel *tview.TextView, app *tview.Application) {
@@ -343,6 +386,7 @@ func createTextViewPanel(title string) *tview.TextView {
 	textView.SetTitle(title)
 	textView.SetDynamicColors(true)
 	textView.SetScrollable(true)
+	textView.SetBorderColor(tcell.ColorLightSkyBlue)
 	return textView
 }
 
