@@ -15,8 +15,8 @@ import (
 const (
 	headerHeight   = 6
 	statsHeight    = 6
-	containerWidth = 20
-	rightPanel     = 20
+	containerWidth = 15
+	rightPanel     = 35
 )
 
 type AppComponents struct {
@@ -144,11 +144,11 @@ func createTipsPanel() tview.Primitive {
 	return tview.NewTextView().
 		SetText(strings.TrimSpace(`
 Tips:
-  ↑ ↓       切换容器
-  Ctrl+C    退出
-  Ctrl+L    切换到日志面板
-  Ctrl+I    进入容器
-  Ctrl+D    删除容器`)).
+  	 ↑ ↓       切换容器	 
+	 Ctrl+N    切换到容器信息面板
+	 Ctrl+L    切换到日志面板
+	 Ctrl+I    进入容器
+	 Ctrl+D    删除容器`)).
 		SetTextColor(tcell.ColorYellow)
 }
 
@@ -339,7 +339,7 @@ func updateStats(ctx context.Context, containerName string, statsPanel *tview.Te
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			out, err := exec.Command("docker", "stats", "--no-stream", containerName).Output()
+			out, err := exec.Command("docker", "stats", "--no-stream", containerName, "--format", "table {{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}\t{{.NetIO}}\t{{.BlockIO}}\t{{.PIDs}}").Output()
 			if err == nil {
 				app.QueueUpdateDraw(func() {
 					statsPanel.SetText(string(out))
