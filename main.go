@@ -281,15 +281,22 @@ func getContainerDetails(containerName string) string {
 		return fmt.Sprintf("容器创建时间获取失败: %v", err)
 	}
 
+	// 转换容器创建时间为中国时间
+	dateCmd := exec.Command("bash", "-c", fmt.Sprintf(`export TZ="Asia/Shanghai"; date -d "%s" "+%%Y-%%m-%%d %%H:%%M:%%S"`, strings.TrimSpace(string(created))))
+	createdate, err := dateCmd.Output()
+	if err != nil {
+		return fmt.Sprintf("容器创建时间转换失败: %v", err)
+	}
+
 	// 获取容器的挂载目录 (-v)
-	volumesCmd := exec.Command("docker", "inspect", "--format", "{{range .Mounts}}{{.Source}}{{end}}", containerName)
+	volumesCmd := exec.Command("docker", "inspect", "--format", "{{range .Mounts}}{{.Source}}:{{.Destination}}\n{{end}}", containerName)
 	volumes, err := volumesCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("容器挂载目录获取失败: %v", err)
 	}
 
 	// 获取容器的端口映射 (-p)
-	portsCmd := exec.Command("docker", "inspect", "--format", "{{range .NetworkSettings.Ports}}{{.}}{{end}}", containerName)
+	portsCmd := exec.Command("docker", "ps", "-a", "--filter", "name=^"+containerName+"$", "--format", "table {{.Ports}}")
 	ports, err := portsCmd.Output()
 	if err != nil {
 		return fmt.Sprintf("容器端口映射获取失败: %v", err)
@@ -324,8 +331,8 @@ func getContainerDetails(containerName string) string {
 	}
 
 	// 拼接要显示的信息
-	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s\n挂载目录: %s\n端口映射: %s\n网络地址: %s\n工作目录: %s\n用户: %s\n环境变量: %s",
-		string(status), string(image), string(created), string(volumes), string(ports), string(network), string(workingDir), string(user), string(env))
+	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s\n挂载目录: \n%s\n端口映射: %s\n网络地址: %s\n工作目录: %s\n用户: %s\n环境变量: \n%s",
+		string(status), string(image), string(createdate), string(volumes), string(ports), string(network), string(workingDir), string(user), string(env))
 
 	return info
 }
