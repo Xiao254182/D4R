@@ -104,6 +104,10 @@ func setupGlobalInputHandlers(components *AppComponents) {
 		case event.Key() == tcell.KeyCtrlN:
 			components.App.SetFocus(components.ContainerInfo)
 			return nil
+		case event.Key() == tcell.KeyCtrlU:
+			fmt.Println("yidiaoyong")
+			createContainerInfo(components)
+			return nil
 		}
 		return event
 	})
@@ -465,6 +469,26 @@ func createOutputPanel(logPanel *tview.TextView) *tview.Flex {
 		AddItem(logPanel, 0, 1, false)
 }
 
-// // 创建容器
-// func createContainer() {
-// }
+func createContainerInfo(components *AppComponents) *tview.Application {
+	form := tview.NewForm().
+		AddInputField("Name", "", 20, nil, nil).
+		AddInputField("Image", "", 20, nil, nil).
+		AddInputField("Port Mapping", "", 20, nil, nil).
+		AddInputField("Network", "", 20, nil, nil).
+		AddInputField("Volume", "", 20, nil, nil).
+		AddInputField("Environment", "", 20, nil, nil).
+		AddInputField("User", "", 20, nil, nil).
+		AddInputField("Working Dir", "", 20, nil, nil)
+	form.AddButton("OK", func() {
+		//todo
+	}).
+		AddButton("Cancel", func() {
+			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+		})
+	app := tview.NewApplication()
+	if err := app.SetRoot(form, true).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
+		os.Exit(1)
+	}
+	return app
+}
