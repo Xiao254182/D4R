@@ -45,17 +45,25 @@ func main() {
 
 func setupUI(app *tview.Application) *AppComponents {
 	logPanel := createTextViewPanel("Log")
-	statsPanel := createTextViewPanel("Stats")
+	statsPanel := createTextViewPanelStats("Stats")
 	containerInfoPanel := createTextViewPanel("ContainerInfo")
 
 	containerList := createContainerList(logPanel, statsPanel, containerInfoPanel, app)
-	return &AppComponents{
+	components := &AppComponents{
 		App:           app,
 		MainPage:      createMainLayout(containerList, logPanel, statsPanel, containerInfoPanel),
 		ContainerList: containerList,
 		LogPanel:      logPanel,
 		ContainerInfo: containerInfoPanel,
 	}
+
+	// 获取第一个容器的信息
+	if containerList.GetItemCount() > 0 {
+		var cancelStats context.CancelFunc
+		updateContainerDetails(0, getContainerList(), logPanel, statsPanel, app, &cancelStats, containerInfoPanel)
+	}
+
+	return components
 }
 
 func createMainLayout(containerList *tview.List, logPanel, statsPanel, containerInfo *tview.TextView) *tview.Flex {
@@ -144,11 +152,10 @@ func createTipsPanel() tview.Primitive {
 	return tview.NewTextView().
 		SetText(strings.TrimSpace(`
 Tips:
-  	 ↑ ↓       切换容器	 
-	 Ctrl+N    切换到容器信息面板
-	 Ctrl+L    切换到日志面板
-	 Ctrl+I    进入容器
-	 Ctrl+D    删除容器`)).
+↑ ↓    切换容器	          Ctrl+U 创建一个新的容器
+Ctrl+N 切换到容器信息面板 Ctrl+I 进入容器
+Ctrl+L 切换到日志面板     Ctrl+D 删除容器
+	`)).
 		SetTextColor(tcell.ColorYellow)
 }
 
@@ -442,7 +449,22 @@ func createTextViewPanel(title string) *tview.TextView {
 	return textView
 }
 
+func createTextViewPanelStats(title string) *tview.TextView {
+	textView := tview.NewTextView()
+	textView.SetBorder(true)
+	textView.SetTitle(title)
+	textView.SetDynamicColors(true)
+	textView.SetScrollable(true)
+	textView.SetTextAlign(tview.AlignCenter)
+	textView.SetBorderColor(tcell.ColorLightSkyBlue)
+	return textView
+}
+
 func createOutputPanel(logPanel *tview.TextView) *tview.Flex {
 	return tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(logPanel, 0, 1, false)
 }
+
+// // 创建容器
+// func createContainer() {
+// }
