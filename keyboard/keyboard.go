@@ -28,9 +28,9 @@ func SetupGlobalInputHandlers(components *appcomponents.AppComponents) {
 		case event.Key() == tcell.KeyCtrlN:
 			components.App.SetFocus(components.ContainerInfo)
 			return nil
-			// case event.Key() == tcell.KeyCtrlU:
-			// 	createContainerInfo(components)
-			// 	return nil
+		case event.Key() == tcell.KeyCtrlR:
+			setcontainer.HandleContainerRestart(components)
+			return nil
 		}
 		return event
 	})
