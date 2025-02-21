@@ -19,7 +19,7 @@ func SetupGlobalInputHandlers(components *appcomponents.AppComponents) {
 		case event.Key() == tcell.KeyEscape:
 			components.App.SetFocus(components.ContainerList)
 			return nil
-		case event.Key() == tcell.KeyCtrlI:
+		case event.Key() == tcell.KeyCtrlE:
 			setcontainer.HandleContainerExec(components)
 			return nil
 		case event.Key() == tcell.KeyCtrlD:
@@ -30,6 +30,9 @@ func SetupGlobalInputHandlers(components *appcomponents.AppComponents) {
 			return nil
 		case event.Key() == tcell.KeyCtrlR:
 			setcontainer.HandleContainerRestart(components)
+			return nil
+		case event.Key() == tcell.KeyCtrlU:
+			components.App.SetRoot(setcontainer.InputContainerForm(components), true)
 			return nil
 		}
 		return event
