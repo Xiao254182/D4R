@@ -2,6 +2,7 @@ package setcontainer
 
 import (
 	appcomponents "D4R/func"
+	"D4R/ui"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -15,6 +16,15 @@ func InputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 
 	var form *tview.Form
 
+	modal := tview.NewModal().
+		SetText("是否创建该容器？").
+		AddButtons([]string{"取消", "确认"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			if buttonLabel == "确认" {
+				createContainer(form, components)
+			}
+			app.SetRoot(form, true)
+		})
 	// 创建表单
 	form = tview.NewForm().
 		AddInputField("Name", "", 30, nil, nil).
@@ -26,10 +36,7 @@ func InputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 		AddInputField("User", "", 30, nil, nil).
 		AddInputField("Workdir", "", 30, nil, nil).
 		AddButton("确认创建", func() {
-			createContainer(form)
-		}).
-		AddButton("取消", func() {
-			app.SetRoot(form, true)
+			app.SetRoot(modal, true)
 		})
 
 	// 创建镜像列表
@@ -61,9 +68,8 @@ func InputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 			list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 				switch event.Key() {
 				case tcell.KeyEscape:
-					// 按 ESC 键切换焦点回表单，隐藏镜像列表
-					flex.RemoveItem(list)
-					app.SetFocus(form)
+					components := ui.SetupLayout(app)
+					app.SetRoot(components.MainPage, true).Run()
 					return nil
 				case tcell.KeyEnter:
 					// 按回车键时，获取选中的镜像并填充到表单的 Images 字段中
@@ -100,7 +106,7 @@ func getImagesList() []string {
 
 // 解析表单数据并创建容器
 // 解析表单数据并创建容器
-func createContainer(form *tview.Form) {
+func createContainer(form *tview.Form, components *appcomponents.AppComponents) {
 	name := form.GetFormItem(0).(*tview.InputField).GetText()
 	image := form.GetFormItem(1).(*tview.InputField).GetText()
 	port := form.GetFormItem(2).(*tview.InputField).GetText()
@@ -150,6 +156,6 @@ func createContainer(form *tview.Form) {
 	if err != nil {
 		fmt.Printf("创建容器失败: %s\n%s\n", err, strings.TrimSpace(string(output)))
 	} else {
-		fmt.Println("容器创建成功:", strings.TrimSpace(string(output)))
+		components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
 	}
 }
