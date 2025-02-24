@@ -19,7 +19,7 @@ func StreamLogs(containerName string, logPanel *tview.TextView, app *tview.Appli
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
-		Tail:       "1000", // 获取最后50行日志，根据需求调整
+		Tail:       "1000",
 	}
 
 	out, err := cli.ContainerLogs(context.Background(), containerName, options)
