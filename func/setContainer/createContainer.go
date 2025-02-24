@@ -11,21 +11,36 @@ import (
 	"github.com/rivo/tview"
 )
 
-func InputContainerForm(components *appcomponents.AppComponents) tview.Primitive {
+func CreateContainerFlex(components *appcomponents.AppComponents) {
+	modal := tview.NewModal()
+	form := inputContainerForm(components)
+
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(modal, 0, 1, false).
+		AddItem(form, 0, 3, true)
+
+	components.App.SetRoot(flex, true)
+}
+
+func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive {
 	app := components.App
 
 	var form *tview.Form
 
-	modal := tview.NewModal().
+	popmodal := tview.NewModal().
 		SetText("是否创建该容器？").
-		AddButtons([]string{"取消", "确认"}).
+		AddButtons([]string{"取消并返回主页面", "确认"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "确认" {
 				createContainer(form, components)
+				// 手动触发退出键逻辑
+				event := tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)
+				form.InputHandler()(event, func(p tview.Primitive) {})
 			}
-			app.SetRoot(form, true)
+			app.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
 		})
-	// 创建表单
+	//创建表单
 	form = tview.NewForm().
 		AddInputField("Name", "", 30, nil, nil).
 		AddInputField("Images", "", 30, nil, nil).
@@ -36,9 +51,8 @@ func InputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 		AddInputField("User", "", 30, nil, nil).
 		AddInputField("Workdir", "", 30, nil, nil).
 		AddButton("确认创建", func() {
-			app.SetRoot(modal, true)
+			app.SetRoot(popmodal, true)
 		})
-
 	// 创建镜像列表
 	list := tview.NewList()
 
@@ -105,7 +119,6 @@ func getImagesList() []string {
 }
 
 // 解析表单数据并创建容器
-// 解析表单数据并创建容器
 func createContainer(form *tview.Form, components *appcomponents.AppComponents) {
 	name := form.GetFormItem(0).(*tview.InputField).GetText()
 	image := form.GetFormItem(1).(*tview.InputField).GetText()
@@ -156,6 +169,5 @@ func createContainer(form *tview.Form, components *appcomponents.AppComponents) 
 	if err != nil {
 		fmt.Printf("创建容器失败: %s\n%s\n", err, strings.TrimSpace(string(output)))
 	} else {
-		components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
 	}
 }

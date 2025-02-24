@@ -32,7 +32,7 @@ func SetupGlobalInputHandlers(components *appcomponents.AppComponents) {
 			setcontainer.HandleContainerRestart(components)
 			return nil
 		case event.Key() == tcell.KeyCtrlU:
-			components.App.SetRoot(setcontainer.InputContainerForm(components), true)
+			setcontainer.CreateContainerFlex(components)
 			return nil
 		}
 		return event
