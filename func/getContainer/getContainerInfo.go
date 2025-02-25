@@ -33,9 +33,28 @@ func GetContainerInfo(containerName string) string {
 		fmt.Println("Error inspecting container:", err)
 	}
 
+	Mount := containerInfo.Mounts
+	MountMap := make(chan string, len(Mount)) // 缓冲区大小为 Mount 切片的长度
+	// 向通道中写入数据
+	go func() {
+		for _, mountMap := range Mount {
+			MountMap <- fmt.Sprintf("%s:%s\n", mountMap.Source, mountMap.Destination)
+		}
+		close(MountMap) // 写入完成后关闭通道
+	}()
+	// 读取通道中的数据并拼接成字符串
+	var mounts []string
+	for mount := range MountMap {
+		mounts = append(mounts, mount)
+	}
+	mountsInfo := ""
+	for _, mount := range mounts {
+		mountsInfo += mount
+	}
+
 	// 拼接要显示的信息
-	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s\n挂载目录: \n%s\n端口映射: %s\n网络地址: %s\n工作目录: %s\n用户: %s\n环境变量: \n%s",
-		string(containerInfo.State.Status), string(containerInfo.Config.Image), string(containerInfo.Created), containerInfo.Mounts, containerInfo.NetworkSettings.Ports, string(containerInfo.NetworkSettings.IPAddress), string(containerInfo.Config.WorkingDir), string(containerInfo.Config.User), containerInfo.Config.Env)
+	info := fmt.Sprintf("状态: %s\n镜像: %s\n创建时间: %s\n挂载目录: \n%v\n端口映射: %s\n网络地址: %s\n工作目录: %s\n用户: %s\n环境变量: \n%s",
+		string(containerInfo.State.Status), string(containerInfo.Config.Image), string(containerInfo.Created), mountsInfo, containerInfo.NetworkSettings.Ports, string(containerInfo.NetworkSettings.IPAddress), string(containerInfo.Config.WorkingDir), string(containerInfo.Config.User), containerInfo.Config.Env)
 
 	return info
 }
