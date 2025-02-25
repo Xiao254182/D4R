@@ -12,15 +12,20 @@ import (
 )
 
 func CreateContainerFlex(components *appcomponents.AppComponents) {
-	modal := tview.NewModal()
 	form := inputContainerForm(components)
 
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(modal, 0, 1, false).
 		AddItem(form, 0, 3, true)
 
-	components.App.SetRoot(flex, true)
+	components.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEsc {
+			// 处理 ESC 键时的逻辑，停止应用
+			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+			return nil
+		}
+		return event
+	})
 }
 
 func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive {
@@ -73,7 +78,6 @@ func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 		focusedIndex, _ := form.GetFocusedItemIndex()
 
 		if event.Key() == tcell.KeyTab && focusedIndex == 1 {
-			fmt.Println("test")
 			// 仅在第二行按 Tab 时展示列表
 			// 按 Tab 键切换焦点到镜像列表，并添加列表到布局
 			flex.AddItem(list, 0, 2, false)
