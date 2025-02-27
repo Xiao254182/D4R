@@ -38,7 +38,7 @@ func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 		AddButtons([]string{"取消并返回主页面", "确认"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "确认" {
-				createContainer(form, components)
+				createContainer(form)
 				// 手动触发退出键逻辑
 				event := tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)
 				form.InputHandler()(event, func(p tview.Primitive) {})
@@ -123,7 +123,7 @@ func getImagesList() []string {
 }
 
 // 解析表单数据并创建容器
-func createContainer(form *tview.Form, components *appcomponents.AppComponents) {
+func createContainer(form *tview.Form) {
 	name := form.GetFormItem(0).(*tview.InputField).GetText()
 	image := form.GetFormItem(1).(*tview.InputField).GetText()
 	port := form.GetFormItem(2).(*tview.InputField).GetText()
