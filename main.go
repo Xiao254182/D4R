@@ -1,7 +1,7 @@
 package main
 
 import (
-	"D4R/keyboard"
+	setcontainer "D4R/func/setContainer"
 	"D4R/ui"
 	"fmt"
 	"log"
@@ -23,7 +23,7 @@ func main() {
 	app := tview.NewApplication()
 	components := ui.SetupLayout(app)
 
-	keyboard.SetupGlobalInputHandlers(components)
+	setcontainer.SetupGlobalInputHandlers(components)
 
 	if err := app.SetRoot(components.MainPage, true).Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)

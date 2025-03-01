@@ -21,6 +21,7 @@ func CreateContainerFlex(components *appcomponents.AppComponents) {
 	components.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			// 处理 ESC 键时的逻辑，停止应用
+			SetupGlobalInputHandlers(components)
 			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
 			return nil
 		}
