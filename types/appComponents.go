@@ -1,4 +1,4 @@
-package appcomponents
+package types
 
 import "github.com/rivo/tview"
 
