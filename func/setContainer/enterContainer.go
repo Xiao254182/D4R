@@ -1,8 +1,8 @@
 package setcontainer
 
 import (
-	appcomponents "D4R/func"
 	getcontainer "D4R/func/getContainer"
+	appcomponents "D4R/types"
 	"fmt"
 	"os"
 	"os/exec"

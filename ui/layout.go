@@ -1,8 +1,8 @@
 package ui
 
 import (
-	appcomponents "D4R/func"
 	getcontainer "D4R/func/getContainer"
+	appcomponents "D4R/types"
 	"D4R/ui/header"
 	"D4R/ui/page"
 	"context"

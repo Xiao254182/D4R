@@ -1,8 +1,8 @@
 package keyboard
 
 import (
-	appcomponents "D4R/func"
 	setcontainer "D4R/func/setContainer"
+	appcomponents "D4R/types"
 
 	"github.com/gdamore/tcell/v2"
 )
