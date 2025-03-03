@@ -2,7 +2,7 @@ package ui
 
 import (
 	getcontainer "D4R/func/getContainer"
-	appcomponents "D4R/types"
+	"D4R/types"
 	"D4R/ui/header"
 	"D4R/ui/page"
 	"context"
@@ -19,42 +19,49 @@ const (
 	rightPanel     = 35
 )
 
-func SetupLayout(app *tview.Application) *appcomponents.AppComponents {
+func SetupLayout(app *tview.Application) *types.AppUI {
+	// 统一初始化 UI 组件
+	appUI := InitAppUI(app)
+	appUI.MainPage = CreateMainLayout(appUI)
+
+	// 获取第一个容器的信息
+	if appUI.ContainerList.GetItemCount() > 0 {
+		var cancelStats context.CancelFunc
+		getcontainer.UpdateContainerDetails(0, getcontainer.GetContainerList(), appUI.LogPanel, appUI.StatsPanel, app, &cancelStats, appUI.ContainerInfo)
+	}
+
+	return appUI
+}
+
+func InitAppUI(app *tview.Application) *types.AppUI {
 	logPanel := page.CreateTextViewPanel("Log")
 	statsPanel := page.CreateTextViewPanelStats("Stats")
 	containerInfoPanel := page.CreateTextViewPanel("ContainerInfo")
 
 	containerList := getcontainer.CreateContainerList(logPanel, statsPanel, containerInfoPanel, app)
-	components := &appcomponents.AppComponents{
+
+	return &types.AppUI{
 		App:           app,
-		MainPage:      createMainLayout(containerList, logPanel, statsPanel, containerInfoPanel),
 		ContainerList: containerList,
 		LogPanel:      logPanel,
+		StatsPanel:    statsPanel,
 		ContainerInfo: containerInfoPanel,
 	}
-
-	// 获取第一个容器的信息
-	if containerList.GetItemCount() > 0 {
-		var cancelStats context.CancelFunc
-		getcontainer.UpdateContainerDetails(0, getcontainer.GetContainerList(), logPanel, statsPanel, app, &cancelStats, containerInfoPanel)
-	}
-
-	return components
 }
 
-func createMainLayout(containerList *tview.List, logPanel, statsPanel, containerInfo *tview.TextView) *tview.Flex {
+func CreateMainLayout(appUI *types.AppUI) *tview.Flex {
 	header := header.CreateHeader()
-	outputPanel := page.CreateOutputPanel(logPanel)
-
 	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
+
+	containerDisplay := tview.NewFlex().
+		AddItem(appUI.ContainerList, containerWidth, 1, true).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(appUI.LogPanel, 0, 3, false).
+			AddItem(appUI.StatsPanel, statsHeight, 1, false), 0, 2, false).
+		AddItem(appUI.ContainerInfo, rightPanel, 1, false)
 
 	return tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header, headerHeight, 0, false).
 		AddItem(separator, 1, 0, false).
-		AddItem(tview.NewFlex().
-			AddItem(containerList, containerWidth, 1, true).
-			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-				AddItem(outputPanel, 0, 3, false).
-				AddItem(statsPanel, statsHeight, 1, false), 0, 2, false).
-			AddItem(containerInfo, rightPanel, 1, false), 0, 1, true)
+		AddItem(containerDisplay, 0, 1, true)
 }

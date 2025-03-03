@@ -1,7 +1,7 @@
 package setcontainer
 
 import (
-	appcomponents "D4R/types"
+	"D4R/types"
 	"D4R/ui"
 	"fmt"
 	"os/exec"
@@ -11,26 +11,25 @@ import (
 	"github.com/rivo/tview"
 )
 
-func CreateContainerFlex(components *appcomponents.AppComponents) {
-	form := inputContainerForm(components)
+func CreateContainerFlex(appUI *types.AppUI) {
+	form := InputContainerForm(appUI)
 
-	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(form, 0, 3, true)
+	flex := ui.CreateMainLayout(appUI).
+		AddItem(form, 0, 3, false)
 
-	components.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	appUI.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			// 处理 ESC 键时的逻辑，停止应用
-			SetupGlobalInputHandlers(components)
-			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+			SetupGlobalInputHandlers(appUI)
+			appUI.App.SetRoot(appUI.MainPage, true).SetFocus(appUI.ContainerList)
 			return nil
 		}
 		return event
 	})
 }
 
-func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive {
-	app := components.App
+func InputContainerForm(appUI *types.AppUI) tview.Primitive {
+	app := appUI.App
 
 	var form *tview.Form
 
@@ -44,7 +43,7 @@ func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 				event := tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)
 				form.InputHandler()(event, func(p tview.Primitive) {})
 			}
-			app.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+			app.SetRoot(appUI.MainPage, true).SetFocus(appUI.ContainerList)
 		})
 	//创建表单
 	form = tview.NewForm().
@@ -87,8 +86,8 @@ func inputContainerForm(components *appcomponents.AppComponents) tview.Primitive
 			list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 				switch event.Key() {
 				case tcell.KeyEscape:
-					components := ui.SetupLayout(app)
-					app.SetRoot(components.MainPage, true).Run()
+					//appUI := ui.SetupLayout(app)
+					app.SetRoot(appUI.MainPage, true).Run()
 					return nil
 				case tcell.KeyEnter:
 					// 按回车键时，获取选中的镜像并填充到表单的 Images 字段中

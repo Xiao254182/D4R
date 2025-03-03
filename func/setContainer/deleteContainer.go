@@ -2,16 +2,16 @@ package setcontainer
 
 import (
 	getcontainer "D4R/func/getContainer"
-	appcomponents "D4R/types"
+	"D4R/types"
 	"fmt"
 	"os/exec"
 
 	"github.com/rivo/tview"
 )
 
-func HandleContainerDeletion(components *appcomponents.AppComponents) {
-	index := components.ContainerList.GetCurrentItem()
-	mainText, _ := components.ContainerList.GetItemText(index)
+func HandleContainerDeletion(appUI *types.AppUI) {
+	index := appUI.ContainerList.GetCurrentItem()
+	mainText, _ := appUI.ContainerList.GetItemText(index)
 	containerID := getcontainer.ExtractContainerID(mainText)
 
 	if containerID == "" {
@@ -23,19 +23,19 @@ func HandleContainerDeletion(components *appcomponents.AppComponents) {
 		AddButtons([]string{"取消", "确认删除"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "确认删除" {
-				deleteContainer(containerID, components)
+				deleteContainer(containerID, appUI)
 			}
-			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+			appUI.App.SetRoot(appUI.MainPage, true).SetFocus(appUI.ContainerList)
 		})
 
-	components.App.SetRoot(modal, true)
+	appUI.App.SetRoot(modal, true)
 }
-func deleteContainer(containerID string, components *appcomponents.AppComponents) {
+func deleteContainer(containerID string, appUI *types.AppUI) {
 	if err := exec.Command("docker", "rm", "-f", containerID).Run(); err != nil {
-		showErrorMessage(components.App, fmt.Sprintf("删除失败: %v", err))
+		showErrorMessage(appUI.App, fmt.Sprintf("删除失败: %v", err))
 		return
 	}
-	refreshContainerList(components)
+	refreshContainerList(appUI)
 }
 
 func showErrorMessage(app *tview.Application, msg string) {
@@ -45,10 +45,10 @@ func showErrorMessage(app *tview.Application, msg string) {
 	app.SetRoot(modal, true)
 }
 
-func refreshContainerList(components *appcomponents.AppComponents) {
-	components.ContainerList.Clear()
+func refreshContainerList(appUI *types.AppUI) {
+	appUI.ContainerList.Clear()
 	containers := getcontainer.GetContainerList()
 	for i, name := range containers {
-		components.ContainerList.AddItem(fmt.Sprintf("%d.%s", i+1, name), "", 0, nil)
+		appUI.ContainerList.AddItem(fmt.Sprintf("%d.%s", i+1, name), "", 0, nil)
 	}
 }

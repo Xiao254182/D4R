@@ -21,11 +21,11 @@ func main() {
 	}
 
 	app := tview.NewApplication()
-	components := ui.SetupLayout(app)
+	appUI := ui.SetupLayout(app)
 
-	setcontainer.SetupGlobalInputHandlers(components)
+	setcontainer.SetupGlobalInputHandlers(appUI)
 
-	if err := app.SetRoot(components.MainPage, true).Run(); err != nil {
+	if err := app.SetRoot(appUI.MainPage, true).Run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
 		os.Exit(1)
 	}

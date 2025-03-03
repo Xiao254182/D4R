@@ -1,37 +1,37 @@
 package setcontainer
 
 import (
-	appcomponents "D4R/types"
+	"D4R/types"
 
 	"github.com/gdamore/tcell/v2"
 )
 
-func SetupGlobalInputHandlers(components *appcomponents.AppComponents) {
-	components.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+func SetupGlobalInputHandlers(appUI *types.AppUI) {
+	appUI.App.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch {
 		case event.Key() == tcell.KeyCtrlC:
-			components.App.Stop()
+			appUI.App.Stop()
 			return nil
 		case event.Key() == tcell.KeyCtrlL:
-			components.App.SetFocus(components.LogPanel)
+			appUI.App.SetFocus(appUI.LogPanel)
 			return nil
 		case event.Key() == tcell.KeyEscape:
-			components.App.SetFocus(components.ContainerList)
+			appUI.App.SetFocus(appUI.ContainerList)
 			return nil
 		case event.Key() == tcell.KeyCtrlE:
-			HandleContainerExec(components)
+			HandleContainerExec(appUI)
 			return nil
 		case event.Key() == tcell.KeyCtrlD:
-			HandleContainerDeletion(components)
+			HandleContainerDeletion(appUI)
 			return nil
 		case event.Key() == tcell.KeyCtrlN:
-			components.App.SetFocus(components.ContainerInfo)
+			appUI.App.SetFocus(appUI.ContainerInfo)
 			return nil
 		case event.Key() == tcell.KeyCtrlR:
-			HandleContainerRestart(components)
+			HandleContainerRestart(appUI)
 			return nil
 		case event.Key() == tcell.KeyCtrlU:
-			CreateContainerFlex(components)
+			CreateContainerFlex(appUI)
 			return nil
 		}
 		return event

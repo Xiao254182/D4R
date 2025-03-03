@@ -2,16 +2,16 @@ package setcontainer
 
 import (
 	getcontainer "D4R/func/getContainer"
-	appcomponents "D4R/types"
+	"D4R/types"
 	"fmt"
 	"os/exec"
 
 	"github.com/rivo/tview"
 )
 
-func HandleContainerRestart(components *appcomponents.AppComponents) {
-	index := components.ContainerList.GetCurrentItem()
-	mainText, _ := components.ContainerList.GetItemText(index)
+func HandleContainerRestart(appUI *types.AppUI) {
+	index := appUI.ContainerList.GetCurrentItem()
+	mainText, _ := appUI.ContainerList.GetItemText(index)
 	containerID := getcontainer.ExtractContainerID(mainText)
 
 	if containerID == "" {
@@ -23,17 +23,17 @@ func HandleContainerRestart(components *appcomponents.AppComponents) {
 		AddButtons([]string{"取消", "确认重启"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 			if buttonLabel == "确认重启" {
-				restartContainer(containerID, components)
+				restartContainer(containerID, appUI)
 			}
-			components.App.SetRoot(components.MainPage, true).SetFocus(components.ContainerList)
+			appUI.App.SetRoot(appUI.MainPage, true).SetFocus(appUI.ContainerList)
 		})
 
-	components.App.SetRoot(modal, true)
+	appUI.App.SetRoot(modal, true)
 }
-func restartContainer(containerID string, components *appcomponents.AppComponents) {
+func restartContainer(containerID string, appUI *types.AppUI) {
 	if err := exec.Command("docker", "restart", containerID).Run(); err != nil {
-		showErrorMessage(components.App, fmt.Sprintf("重启失败: %v", err))
+		showErrorMessage(appUI.App, fmt.Sprintf("重启失败: %v", err))
 		return
 	}
-	refreshContainerList(components)
+	refreshContainerList(appUI)
 }

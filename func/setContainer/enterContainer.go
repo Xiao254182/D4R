@@ -2,7 +2,7 @@ package setcontainer
 
 import (
 	getcontainer "D4R/func/getContainer"
-	appcomponents "D4R/types"
+	"D4R/types"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,13 +10,13 @@ import (
 	"github.com/rivo/tview"
 )
 
-func HandleContainerExec(components *appcomponents.AppComponents) {
-	index := components.ContainerList.GetCurrentItem()
-	mainText, _ := components.ContainerList.GetItemText(index)
+func HandleContainerExec(appUI *types.AppUI) {
+	index := appUI.ContainerList.GetCurrentItem()
+	mainText, _ := appUI.ContainerList.GetItemText(index)
 	containerID := getcontainer.ExtractContainerID(mainText)
 
 	if containerID != "" {
-		enterContainer(components.App, containerID)
+		enterContainer(appUI.App, containerID)
 	}
 }
 func enterContainer(app *tview.Application, containerID string) {
