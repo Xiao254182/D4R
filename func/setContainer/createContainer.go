@@ -14,14 +14,14 @@ import (
 func CreateContainerFlex(appUI *types.AppUI) {
 	form := InputContainerForm(appUI)
 	header := header.CreateHeader()
-	separator := tview.NewTextView().SetText(strings.Repeat("- -", 1000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
+	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header, 6, 0, false).
 		AddItem(separator, 1, 0, false).
 		AddItem(form, 0, 3, false)
 
-	appUI.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	appUI.App.SetRoot(flex, true).SetFocus(form).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			// 处理 ESC 键时的逻辑，停止应用
 			SetupGlobalInputHandlers(appUI)
@@ -37,7 +37,7 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 
 	var form *tview.Form
 
-	popmodal := tview.NewModal().
+	popmodal := tview.NewModal().SetFocus(0).
 		SetText("是否创建该容器？").
 		AddButtons([]string{"取消并返回主页面", "确认"}).
 		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
