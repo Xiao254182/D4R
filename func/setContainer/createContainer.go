@@ -2,7 +2,7 @@ package setcontainer
 
 import (
 	"D4R/types"
-	"D4R/ui"
+	"D4R/ui/header"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -13,8 +13,12 @@ import (
 
 func CreateContainerFlex(appUI *types.AppUI) {
 	form := InputContainerForm(appUI)
+	header := header.CreateHeader()
+	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
 
-	flex := ui.CreateMainLayout(appUI).
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(header, 6, 0, false).
+		AddItem(separator, 1, 0, false).
 		AddItem(form, 0, 3, false)
 
 	appUI.App.SetRoot(flex, true).SetFocus(flex).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
