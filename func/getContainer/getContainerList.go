@@ -1,8 +1,10 @@
 package getcontainer
 
 import (
+	"context"
 	"fmt"
-	"os/exec"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -27,11 +29,26 @@ func CreateContainerList(logPanel, statsPanel, containerInfo *tview.TextView, ap
 }
 
 func GetContainerList() []string {
-	out, err := exec.Command("docker", "ps", "-a", "--format", "{{.Names}}").Output()
+	apiClient, err := client.NewClientWithOpts(client.WithVersion("1.47"))
 	if err != nil {
-		return []string{}
+		panic(err)
 	}
-	return strings.Split(strings.TrimSpace(string(out)), "\n")
+	defer apiClient.Close()
+
+	containers, err := apiClient.ContainerList(context.Background(), container.ListOptions{All: true})
+	if err != nil {
+		panic(err)
+	}
+
+	var containerNames []string
+
+	for _, ctr := range containers {
+		if len(ctr.Names) > 0 {
+			name := strings.TrimPrefix(ctr.Names[0], "/") // 去掉 "/"
+			containerNames = append(containerNames, name)
+		}
+	}
+	return containerNames
 }
 
 func ExtractContainerID(text string) string {
