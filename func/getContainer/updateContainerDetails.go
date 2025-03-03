@@ -2,7 +2,6 @@ package getcontainer
 
 import (
 	"context"
-
 	"github.com/rivo/tview"
 )
 
@@ -13,7 +12,9 @@ func UpdateContainerDetails(index int, containers []string, logPanel, statsPanel
 	if index < 0 || index >= len(containers) {
 		return
 	}
-	name := containers[index]
+
+	nameList := GetContainerList()
+	name := nameList[index]
 
 	// 更新容器详情信息
 	infoPanel := CreateContainerOut(name)

@@ -20,10 +20,10 @@ func CreateContainerList(logPanel, statsPanel, containerInfo *tview.TextView, ap
 		list.AddItem(fmt.Sprintf("%d.%s", i+1, name), "", 0, nil)
 	}
 
-	//var cancelStats context.CancelFunc
-	//list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
-	//	UpdateContainerDetails(index, containers, logPanel, statsPanel, app, &cancelStats, containerInfo)
-	//})
+	var cancelStats context.CancelFunc
+	list.SetChangedFunc(func(index int, mainText, secondaryText string, shortcut rune) {
+		UpdateContainerDetails(index, containers, logPanel, statsPanel, app, &cancelStats, containerInfo)
+	})
 
 	return list
 }
