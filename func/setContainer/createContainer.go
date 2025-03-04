@@ -4,7 +4,9 @@ import (
 	"D4R/types"
 	"D4R/ui/header"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -120,6 +122,51 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 					return event
 				})
 				return nil
+			} else {
+				if focusedIndex == 3 {
+					treeView := tview.NewTreeView()
+
+					flex.AddItem(treeView, 0, 2, false)
+					app.SetFocus(treeView)
+
+					// 设置要展示的根目录（当前目录）
+					rootPath := "/"
+					rootNode := tview.NewTreeNode(rootPath).
+						SetColor(tcell.ColorYellow).
+						SetReference(rootPath).
+						SetExpanded(true)
+
+					treeView.SetRoot(rootNode).SetCurrentNode(rootNode)
+
+					// 处理回车键展开/折叠 或 显示文件路径
+					treeView.SetSelectedFunc(func(node *tview.TreeNode) {
+						ref := node.GetReference()
+						if ref == nil {
+							return
+						}
+
+						path := ref.(string)
+
+						fileInfo, err := os.Stat(path)
+						if err != nil {
+							return
+						}
+
+						if fileInfo.IsDir() {
+							// 如果是目录，展开/折叠
+							if len(node.GetChildren()) == 0 {
+								buildTreeNodes(path, node) // 加载目录内容
+							}
+							node.SetExpanded(!node.IsExpanded())
+						} else {
+							// 如果是文件，将路径写入到表单中
+							form.GetFormItem(3).(*tview.InputField).SetText(path)
+						}
+						// 焦点回到表单
+						flex.RemoveItem(treeView)
+						app.SetFocus(form)
+					})
+				}
 			}
 		}
 		return event
@@ -189,5 +236,27 @@ func createContainer(form *tview.Form) {
 	if err != nil {
 		fmt.Printf("创建容器失败: %s\n%s\n", err, strings.TrimSpace(string(output)))
 	} else {
+	}
+}
+
+// 递归构建 tview 树节点
+func buildTreeNodes(path string, parent *tview.TreeNode) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		return
+	}
+
+	for _, file := range files {
+		fullPath := filepath.Join(path, file.Name())
+		node := tview.NewTreeNode(file.Name()).SetReference(fullPath)
+
+		if file.IsDir() {
+			node.SetColor(tcell.ColorYellow) // 目录黄色
+			node.SetExpanded(false)          // 默认不展开
+		} else {
+			node.SetColor(tcell.ColorGreen) // 文件绿色
+		}
+
+		parent.AddChild(node)
 	}
 }
