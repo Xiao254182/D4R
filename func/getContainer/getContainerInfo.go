@@ -36,7 +36,7 @@ func CreateContainerInfo(containerName string) string {
 }
 
 func GetContainerInfo(containerName string) container.InspectResponse {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.47"))
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println("Error creating Docker client:", err)
 	}
@@ -51,7 +51,7 @@ func GetContainerInfo(containerName string) container.InspectResponse {
 }
 
 func formatMounts(containerName string) string {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.47"))
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println("Error creating Docker client:", err)
 	}
@@ -85,7 +85,7 @@ func formatMounts(containerName string) string {
 }
 
 func formatPorts(containerName string) string {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.47"))
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println("Error creating Docker client:", err)
 		return ""
@@ -143,7 +143,7 @@ func formatPorts(containerName string) string {
 }
 
 func formatEnvs(containerName string) string {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.47"))
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		fmt.Println("Error creating Docker client:", err)
 		return ""

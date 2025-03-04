@@ -10,7 +10,7 @@ import (
 )
 
 func StreamLogs(containerName string, logPanel *tview.TextView, app *tview.Application) {
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.47")) // 根据您的Docker版本选择合适的API版本
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation()) // 根据您的Docker版本选择合适的API版本
 	if err != nil {
 		return
 	}

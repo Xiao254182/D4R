@@ -3,9 +3,10 @@ package getcontainer
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -29,7 +30,7 @@ func CreateContainerList(logPanel, statsPanel, containerInfo *tview.TextView, ap
 }
 
 func GetContainerList() []string {
-	apiClient, err := client.NewClientWithOpts(client.WithVersion("1.47"))
+	apiClient, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
