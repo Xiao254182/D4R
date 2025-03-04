@@ -19,7 +19,7 @@ func CreateContainerFlex(appUI *types.AppUI) {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(header, 6, 0, false).
 		AddItem(separator, 1, 0, false).
-		AddItem(form, 0, 3, false)
+		AddItem(form, 0, 3, true)
 
 	appUI.App.SetRoot(flex, true).SetFocus(form).SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
@@ -62,6 +62,7 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 		AddButton("确认创建", func() {
 			app.SetRoot(popmodal, true)
 		})
+
 	// 创建镜像列表
 	list := tview.NewList()
 
@@ -81,35 +82,45 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 		// 获取当前聚焦的表单项索引
 		focusedIndex, _ := form.GetFocusedItemIndex()
 
-		if event.Key() == tcell.KeyTab && focusedIndex == 1 {
-			// 仅在第二行按 Tab 时展示列表
-			// 按 Tab 键切换焦点到镜像列表，并添加列表到布局
-			flex.AddItem(list, 0, 2, false)
-			app.SetFocus(list)
+		switch event.Key() {
+		case tcell.KeyUp: // 按 ↑ 切换到上一个表单项
+			if focusedIndex > 0 {
+				app.SetFocus(form.GetFormItem(focusedIndex - 1))
+				return nil
+			}
+		case tcell.KeyDown: // 按 ↓ 切换到下一个表单项
+			if focusedIndex < form.GetFormItemCount()-1 {
+				app.SetFocus(form.GetFormItem(focusedIndex + 1))
+				return nil
+			}
+		case tcell.KeyTab: // 仅在第二行按 Tab 时展示列表
+			if focusedIndex == 1 {
+				flex.AddItem(list, 0, 2, false)
+				app.SetFocus(list)
 
-			list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-				switch event.Key() {
-				case tcell.KeyEscape:
-					//appUI := ui.SetupLayout(app)
-					app.SetRoot(appUI.MainPage, true).Run()
-					return nil
-				case tcell.KeyEnter:
-					// 按回车键时，获取选中的镜像并填充到表单的 Images 字段中
-					selectImage, _ := list.GetItemText(list.GetCurrentItem())
-					// 通过空格拆分字符串
-					parts := strings.Fields(selectImage)
-					if len(parts) >= 2 { // 确保有足够的字段
-						image := fmt.Sprintf("%s:%s", parts[0], parts[1])
-						form.GetFormItem(1).(*tview.InputField).SetText(image)
+				list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+					switch event.Key() {
+					case tcell.KeyEscape:
+						app.SetRoot(appUI.MainPage, true).Run()
+						return nil
+					case tcell.KeyEnter:
+						// 按回车键时，获取选中的镜像并填充到表单的 Images 字段中
+						selectImage, _ := list.GetItemText(list.GetCurrentItem())
+						parts := strings.Fields(selectImage)
+						if len(parts) >= 2 {
+							image := fmt.Sprintf("%s:%s", parts[0], parts[1])
+							form.GetFormItem(1).(*tview.InputField).SetText(image)
+						}
+						// 焦点回到表单
+						flex.RemoveItem(list)
+						app.SetFocus(form)
 					}
-					// 焦点回到表单
-					flex.RemoveItem(list)
-					app.SetFocus(form)
-				}
-				return event
-			})
-			return nil
+					return event
+				})
+				return nil
+			}
 		}
+
 		return event
 	})
 	return flex
