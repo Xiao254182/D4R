@@ -158,13 +158,31 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 								buildTreeNodes(path, node) // 加载目录内容
 							}
 							node.SetExpanded(!node.IsExpanded())
-						} else {
-							// 如果是文件，将路径写入到表单中
-							form.GetFormItem(3).(*tview.InputField).SetText(path)
 						}
-						// 焦点回到表单
-						flex.RemoveItem(treeView)
-						app.SetFocus(form)
+					})
+
+					// 监听 Tab 键，仅在选中文件时填充表单
+					treeView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+						if event.Key() == tcell.KeyTab {
+							node := treeView.GetCurrentNode()
+							if node == nil {
+								return event
+							}
+
+							ref := node.GetReference()
+							if ref == nil {
+								return event
+							}
+
+							path := ref.(string)
+
+							form.GetFormItem(3).(*tview.InputField).SetText(path)
+							// 焦点回到表单
+							flex.RemoveItem(treeView)
+							app.SetFocus(form)
+							return nil
+						}
+						return event
 					})
 				}
 			}
