@@ -50,7 +50,7 @@ func InitAppUI(app *tview.Application) *types.AppUI {
 }
 
 func CreateMainLayout(appUI *types.AppUI) *tview.Flex {
-	header := header.CreateHeader()
+	header := header.MainHeader()
 	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
 
 	containerDisplay := tview.NewFlex().

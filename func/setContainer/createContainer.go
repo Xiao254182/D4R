@@ -13,7 +13,7 @@ import (
 
 func CreateContainerFlex(appUI *types.AppUI) {
 	form := InputContainerForm(appUI)
-	header := header.CreateHeader()
+	header := header.CreateContainerHeader()
 	separator := tview.NewTextView().SetText(strings.Repeat("- -", 10000)).SetTextAlign(tview.AlignCenter).SetTextColor(tcell.ColorLightSkyBlue)
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
