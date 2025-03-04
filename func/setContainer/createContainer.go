@@ -44,6 +44,7 @@ func InputContainerForm(appUI *types.AppUI) tview.Primitive {
 			if buttonLabel == "确认" {
 				createContainer(form)
 				refreshContainerList(appUI)
+				SetupGlobalInputHandlers(appUI)
 				// 手动触发退出键逻辑
 				event := tcell.NewEventKey(tcell.KeyEscape, 0, tcell.ModNone)
 				form.InputHandler()(event, func(p tview.Primitive) {})
