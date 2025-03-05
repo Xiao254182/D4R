@@ -19,7 +19,7 @@ func StreamLogs(containerName string, logPanel *tview.TextView, app *tview.Appli
 		ShowStdout: true,
 		ShowStderr: true,
 		Follow:     true,
-		Tail:       "1000",
+		Tail:       "200",
 	}
 
 	out, err := cli.ContainerLogs(context.Background(), containerName, options)
