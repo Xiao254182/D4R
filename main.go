@@ -1,40 +1,32 @@
 package main
 
 import (
-	"d4r/menu"
-	"d4r/ps"
-	"d4r/static"
-	"d4r/update"
+	setcontainer "D4R/func/setContainer"
+	"D4R/ui"
 	"fmt"
-	"github.com/rivo/tview"
 	"log"
 	"os"
+	"os/exec"
+
+	"github.com/rivo/tview"
 )
 
-// 主函数
 func main() {
-	app := tview.NewApplication()
-
-	containers, err := ps.GetDockerContainers()
+	// 检查是否可以运行 docker 命令
+	_, err := exec.Command("docker", "ps").Output()
 	if err != nil {
-		//log.Fatal(err)
-		fmt.Println("该系统不存在docker环境或docker服务未启动，请检查docker状态")
-		os.Exit(1) // 退出程序，状态码为1表示有错误发生
+		// 如果执行失败，说明没有安装 Docker
+		log.Println("未找到 Docker 环境，D4R已退出")
+		os.Exit(1)
 	}
 
-	logos := static.CreateTextView("./static/logo/logo.txt")
-	tip := static.CreateTextView("./static/tip/tip.txt")
+	app := tview.NewApplication()
+	appUI := ui.SetupLayout(app)
 
-	table := menu.CreateDockerTable(app, containers, logos, tip)
-	//检测表格的更新
-	go update.UpdateContainers(app, logos, tip)
-	go update.UpdateDockerComposempose(app, logos, tip)
+	setcontainer.SetupGlobalInputHandlers(appUI)
 
-	mainFlex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(table, 0, 10, true) // 将表格添加到剩余空间
-
-	if err := app.SetRoot(mainFlex, true).Run(); err != nil {
-		log.Fatal(err)
+	if err := app.SetRoot(appUI.MainPage, true).Run(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error running application: %v\n", err)
+		os.Exit(1)
 	}
 }
